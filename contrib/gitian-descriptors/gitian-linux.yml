@@ -20,10 +20,11 @@ packages:
 - "python"
 reference_datetime: "2017-01-01 00:00:00"
 remotes:
-- "url": "https://github.com/PACCommunity/PAC.git"
+- "url": "https://github.com/PAC-MX/PAC.git"
   "dir": "PAC"
 files: []
 script: |
+  echo "flag 0"
   WRAP_DIR=$HOME/wrapped
   HOSTS="i686-pc-linux-gnu x86_64-unknown-linux-gnu"
   CONFIGFLAGS="--enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests LDFLAGS=-static-libstdc++"
@@ -32,6 +33,8 @@ script: |
   HOST_CFLAGS="-O2 -g"
   HOST_CXXFLAGS="-O2 -g"
   HOST_LDFLAGS=-static-libstdc++
+
+  echo "flag 1"
 
   export QT_RCC_TEST=1
   export GZIP="-9n"
@@ -44,6 +47,8 @@ script: |
     export BASE_CACHE=${GBUILD_PACKAGE_CACHE}
     mkdir -p ${BASE_CACHE} ${SOURCES_PATH}
   fi
+
+  echo "flag 2"
 
   # Create global faketime wrappers
   for prog in ${FAKETIME_PROGS}; do
@@ -67,6 +72,8 @@ script: |
     done
   done
   export PATH=${WRAP_DIR}:${PATH}
+ 
+  echo "flag 3"
 
   cd PAC
   BASEPREFIX=`pwd`/depends
@@ -88,6 +95,8 @@ script: |
   find paccoincore-* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
   popd
 
+  echo "flag 4"
+
   ORIGPATH="$PATH"
   # Extract the release tarball into a dir for each host and build
   for i in ${HOSTS}; do
@@ -97,15 +106,30 @@ script: |
     INSTALLPATH=`pwd`/installed/${DISTNAME}
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf ../$SOURCEDIST
+    
+    echo "flag 5"
 
     CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}"
+    echo "flag 6"
+    echo "MAKEOPTS: "
+    echo ${MAKEOPTS}
+
     make ${MAKEOPTS}
+    echo "flag 7"
     make ${MAKEOPTS} -C src check-security
+    echo "flag 8"
     make ${MAKEOPTS} -C src check-symbols
-    make install DESTDIR=${INSTALLPATH}
+    echo "flag 9"
+    make install DESTDIR=${INSTALLPATH} 
+    echo "flag 10"
     cd installed
+    echo "flag 11"
     find . -name "lib*.la" -delete
+    echo "flag 12"
     find . -name "lib*.a" -delete
+    
+    echo "flag 13"
+
     rm -rf ${DISTNAME}/lib/pkgconfig
     find ${DISTNAME}/bin -type f -executable -exec objcopy --only-keep-debug {} {}.dbg \; -exec strip -s {} \; -exec objcopy --add-gnu-debuglink={}.dbg {} \;
     find ${DISTNAME}/lib -type f -exec objcopy --only-keep-debug {} {}.dbg \; -exec strip -s {} \; -exec objcopy --add-gnu-debuglink={}.dbg {} \;
@@ -114,6 +138,8 @@ script: |
     cd ../../
     rm -rf distsrc-${i}
   done
+  echo "flag 14"
+
   mkdir -p $OUTDIR/src
   mv $SOURCEDIST $OUTDIR/src
   mv ${OUTDIR}/${DISTNAME}-x86_64-*-debug.tar.gz ${OUTDIR}/${DISTNAME}-linux64-debug.tar.gz
